@@ -90,7 +90,7 @@ func GetPhotos(c *gin.Context) {
 	}
 
     // Return daftar foto dalam format yang sesuai
-    c.JSON(http.StatusOK, photos)
+    c.JSON(http.StatusOK, formattedPhotos)
 }
 // UpdatePhoto mengelola proses pembaruan informasi foto.
 func UpdatePhoto(c *gin.Context) {
