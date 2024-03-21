@@ -17,7 +17,7 @@ func InitDB() {
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_PORT"),
-		"mygram",
+		os.Getenv("DB_NAME"),
 	)
 
 	var err error
