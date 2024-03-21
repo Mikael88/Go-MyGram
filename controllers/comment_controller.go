@@ -51,6 +51,25 @@ func CreateComment(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{"data": comment})
 }
+// GetComments mengambil daftar komentar
+func GetComments(c *gin.Context) {
+    var comments []models.Comment
+
+    // Ambil semua komentar dari database
+    if err := config.DB.Preload("User").Preload("Photo").Find(&comments).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    // Jika tidak ada komentar ditemukan, kembalikan respons kosong
+    if len(comments) == 0 {
+        c.JSON(http.StatusOK, gin.H{"message": "No comments found"})
+        return
+    }
+
+    // Kembalikan daftar komentar dalam respons
+    c.JSON(http.StatusOK, comments)
+}
 // UpdateComment mengelola proses pembaruan komentar.
 func UpdateComment(c *gin.Context) {
 	commentID := c.Param("commentId")

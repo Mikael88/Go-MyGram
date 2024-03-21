@@ -61,6 +61,37 @@ func CreatePhoto(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{"data": photo})
 }
+// GET semua foto
+func GetPhotos(c *gin.Context) {
+    var photos []models.Photo
+
+    // Query database untuk mendapatkan daftar foto beserta detail pengguna
+    if err := config.DB.Preload("User").Find(&photos).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch photos"})
+        return
+    }
+
+	var formattedPhotos []gin.H
+	for _, photo := range photos {
+		formattedPhoto := gin.H{
+			"id":         photo.ID,
+			"title":      photo.Title,
+			"caption":    photo.Caption,
+			"photo_url":  photo.PhotoURL,
+			"user_id":    photo.UserID,
+			"created_at": photo.CreatedAt,
+			"updated_at": photo.UpdatedAt,
+			"user": gin.H{
+				"email":    photo.User.Email,
+				"username": photo.User.Username,
+			},
+		}
+		formattedPhotos = append(formattedPhotos, formattedPhoto)
+	}
+
+    // Return daftar foto dalam format yang sesuai
+    c.JSON(http.StatusOK, photos)
+}
 // UpdatePhoto mengelola proses pembaruan informasi foto.
 func UpdatePhoto(c *gin.Context) {
 	photoID := c.Param("photoId")

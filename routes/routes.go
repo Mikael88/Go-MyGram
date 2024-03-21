@@ -14,14 +14,17 @@ func SetupRoutes(r *gin.Engine) {
 	api.Use(middlewares.AuthMiddleware()) // Terapkan middleware AuthMiddleware pada grup api
 
 	api.POST("/photos", controllers.CreatePhoto)
+	api.GET("/photos", controllers.GetPhotos)
 	api.PUT("/photos/:photoId", middlewares.AuthorizePhoto(), controllers.UpdatePhoto)
 	api.DELETE("/photos/:photoId", middlewares.AuthorizePhoto(), controllers.DeletePhoto)
 
 	api.POST("/comments", controllers.CreateComment)
+	api.GET("/comments", controllers.GetComments)
 	api.PUT("/comments/:commentId", middlewares.AuthorizeComment(), controllers.UpdateComment)
 	api.DELETE("/comments/:commentId", middlewares.AuthorizeComment(), controllers.DeleteComment)
 
 	api.POST("/socialmedias", controllers.CreateSocialMedia)
+	api.GET("/socialmedias", controllers.GetSocialMedias)
 	api.PUT("/socialmedias/:socialMediaId", middlewares.AuthorizeSocialMedia(), controllers.UpdateSocialMedia)
 	api.DELETE("/socialmedias/:socialMediaId", middlewares.AuthorizeSocialMedia(), controllers.DeleteSocialMedia)
 }

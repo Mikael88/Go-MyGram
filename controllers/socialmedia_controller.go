@@ -53,13 +53,24 @@ func CreateSocialMedia(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{"data": socialMedia})
 }
+// GetSocialMedias mengambil daftar media sosial
+func GetSocialMedias(c *gin.Context) {
+    var socialMedias []models.SocialMedia
 
+    // Ambil semua media sosial dari database
+    if err := config.DB.Find(&socialMedias).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    // Kembalikan daftar media sosial dalam respons
+    c.JSON(http.StatusOK, gin.H{"social_medias": socialMedias})
+}
 // UpdateSocialMediaInput adalah struktur untuk validasi input saat memperbarui data sosial media
 type UpdateSocialMediaInput struct {
 	Name           string `json:"name" binding:"required"`
 	SocialMediaURL string `json:"social_media_url" binding:"required"`
 }
-
 // UpdateSocialMedia mengelola proses pembaruan informasi data sosial media
 func UpdateSocialMedia(c *gin.Context) {
 	socialMediaID := c.Param("socialMediaId")
@@ -104,7 +115,6 @@ func UpdateSocialMedia(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"data": socialMedia})
 }
-
 // DeleteSocialMedia mengelola proses penghapusan data sosial media
 func DeleteSocialMedia(c *gin.Context) {
 	socialMediaID := c.Param("socialMediaId")
