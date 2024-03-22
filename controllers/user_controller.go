@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/Mikael88/go-mygram/config"
@@ -19,6 +20,12 @@ func RegisterUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	emailRegex := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+    if !emailRegex.MatchString(user.Email) {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Format email tidak valid"})
+        return
+    }
 
 	if err := config.DB.Create(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
