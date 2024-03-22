@@ -5,6 +5,7 @@ import (
 
 	"github.com/Mikael88/go-mygram/config"
 	"github.com/Mikael88/go-mygram/models"
+	"github.com/jinzhu/gorm"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -54,12 +55,24 @@ func CreatePhoto(c *gin.Context) {
 	}
 
 	// Simpan foto ke database
-	if err := config.DB.Create(&photo).Error; err != nil {
+	err := config.DB.Preload("User", func(db *gorm.DB) *gorm.DB {
+		return db.Select("id", "username")
+	}).Create(&photo).Error
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"data": photo})
+	photoResponse := models.PhotoResponse{
+		ID:        photo.ID,
+		Title:     photo.Title,
+		Caption:   photo.Caption,
+		PhotoURL:  photo.PhotoURL,
+		UserID:    photo.UserID,
+		CreatedAt: photo.CreatedAt,
+	  }
+
+	c.JSON(http.StatusCreated, gin.H{"data": photoResponse})
 }
 // GET semua foto
 func GetPhotos(c *gin.Context) {
@@ -129,7 +142,16 @@ func UpdatePhoto(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": photo})
+	photoResponse := models.PhotoResponse{
+		ID:        photo.ID,
+		Title:     photo.Title,
+		Caption:   photo.Caption,
+		PhotoURL:  photo.PhotoURL,
+		UserID:    photo.UserID,
+		CreatedAt: photo.CreatedAt,
+	  }
+
+	c.JSON(http.StatusOK, gin.H{"data": photoResponse})
 }
 // DeletePhoto mengelola proses penghapusan foto.
 func DeletePhoto(c *gin.Context) {

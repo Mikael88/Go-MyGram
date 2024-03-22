@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/Mikael88/go-mygram/config"
 	"github.com/Mikael88/go-mygram/models"
@@ -49,14 +50,22 @@ func CreateComment(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"data": comment})
+	response := map[string]interface{}{
+		"id":        comment.ID,
+		"message":   comment.Message,
+		"photo_id":  comment.PhotoID,
+		"user_id":   comment.UserID,
+		"created_at": comment.CreatedAt.Format(time.RFC3339), // Format date-time
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"data": response})
 }
 // GetComments mengambil daftar komentar
 func GetComments(c *gin.Context) {
     var comments []models.Comment
 
     // Ambil semua komentar dari database
-    if err := config.DB.Preload("User").Preload("Photo").Find(&comments).Error; err != nil {
+    if err := config.DB.Preload("User").Preload("Photo.User").Find(&comments).Error; err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
@@ -67,45 +76,75 @@ func GetComments(c *gin.Context) {
         return
     }
 
-    // Kembalikan daftar komentar dalam respons
-    c.JSON(http.StatusOK, comments)
+    // Transformasi data komentar ke format yang diinginkan
+    formattedComments := make([]map[string]interface{}, len(comments))
+    for i, comment := range comments {
+        formattedComment := map[string]interface{}{
+            "id":         comment.ID,
+            "message":    comment.Message,
+            "photo_id":   comment.PhotoID,
+            "user_id":    comment.UserID,
+            "updated_at": comment.UpdatedAt,
+            "created_at": comment.CreatedAt,
+            "User": map[string]interface{}{
+                "id":       comment.User.ID,
+                "email":    comment.User.Email,
+                "username": comment.User.Username,
+            },
+            "Photo": map[string]interface{}{
+                "id":        comment.Photo.ID,
+                "title":     comment.Photo.Title,
+                "caption":   comment.Photo.Caption,
+                "photo_url": comment.Photo.PhotoURL,
+                "user_id":   comment.Photo.User.ID,
+            },
+        }
+        formattedComments[i] = formattedComment
+    }
+
+    // Kembalikan daftar komentar dalam format yang diinginkan
+    c.JSON(http.StatusOK, formattedComments)
 }
 // UpdateComment mengelola proses pembaruan komentar.
 func UpdateComment(c *gin.Context) {
-	commentID := c.Param("commentId")
+    commentID := c.Param("commentId")
+    var comment models.Comment
+    if err := config.DB.Where("id = ?", commentID).Preload("Photo").Preload("Photo.User").First(&comment).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Comment not found"})
+        return
+    }
 
-	var comment models.Comment
-	if err := config.DB.Where("id = ?", commentID).First(&comment).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Comment not found"})
-		return
-	}
+    // Periksa apakah pengguna yang meminta pembaruan adalah pemilik komentar
+    userId, exists := c.Get("userId")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+        return
+    }
+    if comment.UserID != userId.(uint) {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+        return
+    }
 
-	// Periksa apakah pengguna yang meminta pembaruan adalah pemilik komentar
-	userId, exists := c.Get("userId")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-		return
-	}
+    var updateComment models.Comment
+    if err := c.ShouldBindJSON(&updateComment); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
 
-	if comment.UserID != userId.(uint) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-		return
-	}
+    comment.Message = updateComment.Message
+    if err := config.DB.Save(&comment).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update comment"})
+        return
+    }
 
-	var updateComment models.Comment
-	if err := c.ShouldBindJSON(&updateComment); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	comment.Message = updateComment.Message
-
-	if err := config.DB.Save(&comment).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update comment"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"data": comment})
+    c.JSON(http.StatusOK, gin.H{
+        "id":         comment.Photo.ID,
+        "title":      comment.Photo.Title,
+        "caption":    comment.Photo.Caption,
+        "photo_url":  comment.Photo.PhotoURL,
+        "user_id":    comment.Photo.User.ID,
+        "updated_at": comment.Photo.UpdatedAt,
+    })
 }
 // DeleteComment mengelola proses penghapusan komentar.
 func DeleteComment(c *gin.Context) {

@@ -12,7 +12,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Register dan Login
+// Register
 func RegisterUser(c *gin.Context) {
 	var user models.User
 
@@ -27,12 +27,15 @@ func RegisterUser(c *gin.Context) {
         return
     }
 
+	user.UpdateAt = time.Now()
+
 	if err := config.DB.Create(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"data": user})
 }
+// Login
 func LoginUser(c *gin.Context) {
 	var input struct {
 		Email 	 string `json:"email" binding:"required"`
@@ -62,16 +65,6 @@ func LoginUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"token": token})
-}
-
-func generateJWTToken(userId uint) (string, error) {
-	claims := jwt.MapClaims{
-		"userId": userId,
-		"exp": time.Now().Add(time.Hour * 24).Unix(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte("your_secret_key"))
 }
 // Untuk update data user
 func UpdateUser(c *gin.Context) {
@@ -125,4 +118,14 @@ func DeleteUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
+}
+// Generate token
+func generateJWTToken(userId uint) (string, error) {
+	claims := jwt.MapClaims{
+		"userId": userId,
+		"exp": time.Now().Add(time.Hour * 24).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte("your_secret_key"))
 }
