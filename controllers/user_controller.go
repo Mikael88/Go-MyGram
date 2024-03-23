@@ -12,18 +12,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UpdateUserRequest struct {
-    Email    string `json:"email"`
-    Password string `json:"password"`
-}
 
-type UpdateUserResponse struct {
-    ID        uint      `json:"id"`
-    Email     string    `json:"email"`
-    Username  string    `json:"username"`
-    Age       int       `json:"age"`
-    UpdatedAt time.Time `json:"updated_at"`
-}
 
 
 // Register
@@ -101,7 +90,7 @@ func UpdateUser(c *gin.Context) {
         return
     }
 
-    var req UpdateUserRequest
+    var req models.UpdateUserRequest
     if err := c.ShouldBindJSON(&req); err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
@@ -118,7 +107,7 @@ func UpdateUser(c *gin.Context) {
         return
     }
 
-    response := UpdateUserResponse{
+    response := models.UpdateUserResponse{
         ID:        user.ID,
         Email:     user.Email,
         Username:  user.Username,

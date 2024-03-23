@@ -27,6 +27,19 @@ type UserResponse struct {
     Username string `json:"username"`
 }
 
+type UpdateUserRequest struct {
+    Email    string `json:"email"`
+    Password string `json:"password"`
+}
+
+type UpdateUserResponse struct {
+    ID        uint      `json:"id"`
+    Email     string    `json:"email"`
+    Username  string    `json:"username"`
+    Age       int       `json:"age"`
+    UpdatedAt time.Time `json:"updated_at"`
+}
+
 func (u *User) BeforeCreate(tx *gorm.DB) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
