@@ -70,6 +70,11 @@ func GetSocialMedias(c *gin.Context) {
         return
     }
 
+    if len(socialMedias) == 0 {
+        c.JSON(http.StatusNotFound, gin.H{"message": "No social media data found"})
+        return
+    }
+
     // Transformasi data media sosial ke format yang diinginkan
     formattedSocialMedias := make([]map[string]interface{}, len(socialMedias))
     for i, socialMedia := range socialMedias {

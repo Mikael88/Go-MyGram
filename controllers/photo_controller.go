@@ -84,6 +84,11 @@ func GetPhotos(c *gin.Context) {
         return
     }
 
+	if len(photos) == 0 {
+        c.JSON(http.StatusNotFound, gin.H{"message": "No photos found"})
+        return
+    }
+
 	var formattedPhotos []gin.H
 	for _, photo := range photos {
 		formattedPhoto := gin.H{
