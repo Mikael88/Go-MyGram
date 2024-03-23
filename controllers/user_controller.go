@@ -12,6 +12,20 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type UpdateUserRequest struct {
+    Email    string `json:"email"`
+    Password string `json:"password"`
+}
+
+type UpdateUserResponse struct {
+    ID        uint      `json:"id"`
+    Email     string    `json:"email"`
+    Username  string    `json:"username"`
+    Age       int       `json:"age"`
+    UpdatedAt time.Time `json:"updated_at"`
+}
+
+
 // Register
 func RegisterUser(c *gin.Context) {
 	var user models.User
@@ -75,35 +89,44 @@ func LoginUser(c *gin.Context) {
 }
 // Untuk update data user
 func UpdateUser(c *gin.Context) {
-	userID, exists := c.Get("userId")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-		return
-	}
+    userID, exists := c.Get("userId")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+        return
+    }
 
-	var user models.User
-	if err := config.DB.Where("id = ?", userID).First(&user).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		return
-	}
+    var user models.User
+    if err := config.DB.Where("id = ?", userID).First(&user).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+        return
+    }
 
-	var updateUser models.User
-	if err := c.ShouldBindJSON(&updateUser); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+    var req UpdateUserRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
 
-	user.Email = updateUser.Email
-	user.Password = updateUser.Password
-	user.Username = updateUser.Username
-	user.Age = updateUser.Age
+    user.Email = req.Email
+    if req.Password != "" {
+        user.Password = req.Password
+        config.DB.Model(&user).Update("password", user.Password)
+    }
 
-	if err := config.DB.Save(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
-		return
-	}
+    if err := config.DB.Save(&user).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
+        return
+    }
 
-	c.JSON(http.StatusOK, gin.H{"data": user})
+    response := UpdateUserResponse{
+        ID:        user.ID,
+        Email:     user.Email,
+        Username:  user.Username,
+        Age:       user.Age,
+        UpdatedAt: user.UpdateAt,
+    }
+
+    c.JSON(http.StatusOK, response)
 }
 // Untuk hapus user
 func DeleteUser(c *gin.Context) {
