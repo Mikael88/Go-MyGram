@@ -12,9 +12,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-
-
-
 // Register
 func RegisterUser(c *gin.Context) {
 	var user models.User
