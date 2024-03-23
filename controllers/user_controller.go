@@ -130,24 +130,40 @@ func UpdateUser(c *gin.Context) {
 }
 // Untuk hapus user
 func DeleteUser(c *gin.Context) {
-	userID, exists := c.Get("userId")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-		return
-	}
+    userID, exists := c.Get("userId")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+        return
+    }
 
-	var user models.User
-	if err := config.DB.Where("id = ?", userID).First(&user).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		return
-	}
+    var user models.User
+    if err := config.DB.Where("id = ?", userID).First(&user).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+        return
+    }
 
-	if err := config.DB.Delete(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
-		return
-	}
+    // Hapus semua data terkait user
+	if err := config.DB.Where("user_id = ?", userID).Delete(&models.Comment{}).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user's comments"})
+        return
+    }
 
-	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
+	if err := config.DB.Where("user_id = ?", userID).Delete(&models.SocialMedia{}).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user's comments"})
+        return
+    }
+
+    if err := config.DB.Where("user_id = ?", userID).Delete(&models.Photo{}).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user's photos"})
+        return
+    }
+
+    if err := config.DB.Delete(&user).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"message": "Your account has been successfully deleted"})
 }
 // Generate token
 func generateJWTToken(userId uint) (string, error) {
