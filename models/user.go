@@ -20,7 +20,12 @@ type User struct {
 	SocialMedias []SocialMedia `json:"social_medias"`
 }
 
-
+type UserResponse struct {
+    Age      int    `json:"age"`
+    Email    string `json:"email"`
+    ID       uint   `json:"id"`
+    Username string `json:"username"`
+}
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)

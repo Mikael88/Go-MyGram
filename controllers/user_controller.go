@@ -33,7 +33,14 @@ func RegisterUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"data": user})
+	userResponse := models.UserResponse{
+        Age:      user.Age,
+        Email:    user.Email,
+        ID:       user.ID,
+        Username: user.Username,
+    }
+
+	c.JSON(http.StatusCreated, gin.H{"data": userResponse})
 }
 // Login
 func LoginUser(c *gin.Context) {
