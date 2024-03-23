@@ -27,4 +27,6 @@ func SetupRoutes(r *gin.Engine) {
 	api.GET("/socialmedias", controllers.GetSocialMedias)
 	api.PUT("/socialmedias/:socialMediaId", middlewares.AuthorizeSocialMedia(), controllers.UpdateSocialMedia)
 	api.DELETE("/socialmedias/:socialMediaId", middlewares.AuthorizeSocialMedia(), controllers.DeleteSocialMedia)
+
+	api.DELETE("/users", middlewares.AuthMiddleware(), controllers.DeleteUser)
 }
